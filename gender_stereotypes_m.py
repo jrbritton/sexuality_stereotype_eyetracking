@@ -11,7 +11,7 @@ import pylink
 import random
 
 ### DIALOGUE BOX ROUTINE ###
-exp_info = {'participant': '', 'subgroup': '', 'version': ''}
+exp_info = {'participant': '', 'subgroup': 0, 'version': 0}
 dlg = DlgFromDict(exp_info)
 
 # iohub config file
@@ -23,16 +23,17 @@ io_config = util.readConfig(iohub_config)
 if not dlg.OK:
     quit()
 else:
-    # Quit when either the participant number or age is not filled in
-    if not exp_info['participant'] or not exp_info['age']:
+    # Quit when experiment info is not filled in or if invalid subgroup/version
+    if not exp_info['participant']:
         quit()
-
-    # Also quit in case of invalid participant nr or age
-    if exp_info['participant'] > 99 or int(exp_info['age']) < 18:
+    if exp_info['subgroup'] > 2 or exp_info['version'] > 2:
         quit()
-    else:  # let's start the experiment!
-        print(f"Started experiment for participant {exp_info['participant']} "
-                 f"with age {exp_info['age']}.")
+    if exp_info['subgroup'] < 1 or exp_info['version'] < 1:
+        quit()
+    else:  # Start the experiment!
+        print(f'''Started experiment for participant {exp_info['participant']},
+                 subgroup {exp_info['subgroup']},
+                    version {exp_info['version']}''')
                  
 
 # Initialize a fullscreen window with correct monitor (check monitor centre)
@@ -138,10 +139,11 @@ while True:
 # Start the eye tracker recording
 #tk.startRecording(1, 1, 1, 1)
 
-# The zip function combines the two iterable lists
+# The zip function combines iterable lists
 # The first element of each list is played before moving to the next
+# The index sets the current iteration and the values in parentheses are unpacked from the lists
 
-for trial, prime, target, question in zip(trial_list, prime_list, target_list, question_list):
+for index, (trial, prime, target, question) in enumerate(zip(trial_list, prime_list, target_list, question_list)):
     #tk.sendMessage(f'Trial: {trial}')
     # draw the fixation
     fixation.draw()
@@ -181,29 +183,33 @@ for trial, prime, target, question in zip(trial_list, prime_list, target_list, q
             true_false_stim1.draw()
             win.flip()
             # Check which key was pressed and record response
-            ansKey = event.waitKeys()
-            keys = kb.getKeys(["left", "right"])
-            if ansKey == "left":
-                stims_file.loc[trial, "response"] = "NO"
-            else:
-                stims_file.loc[trial, "response"] = "YES"
+            keys = event.waitKeys(keyList=["left", "right"])
+            if "left" in keys:
+                stims_file.loc[index, "response"] = "NO"
+            elif "right" in keys:
+                stims_file.loc[index, "response"] = "YES"
         else:
             true_false_stim2.draw()
             win.flip()
-            ansKey = event.waitKeys()
-            keys = kb.getKeys(["left", "right"])
-            if ansKey == "left":
-                stims_file.loc[trial, "response"] = "YES"
-            else:
-                stims_file.loc[trial, "response"] = "NO"
+            keys = event.waitKeys(keyList=["left", "right"])
+            if "left" in keys:
+                stims_file.loc[index, "response"] = "YES"
+            elif "right" in keys:
+                stims_file.loc[index, "response"] = "NO"
 
 # Stop the eye tracker recording
 #tk.stopRecording()
 
 ### SENTENCE ROUTINE END ###
 
+# Make subgroup and version strings for concatenation
+subgroup = str(exp_info['subgroup'])
+version = str(exp_info['version'])
+part = exp_info['participant']
+
 # Save stims_file to csv
-stims_file.to_csv('results.csv')
+stims_file.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
+part+'_sub'+subgroup+'ver'+version+'_results.csv', encoding='utf_8_sig')
 
 ### THANK YOU ROUTINE ###
 
