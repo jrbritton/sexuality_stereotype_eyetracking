@@ -3,21 +3,22 @@ from psychopy.visual import Window, TextStim, ImageStim
 from psychopy.core import Clock, quit, wait
 from psychopy.event import Mouse
 from psychopy.hardware.keyboard import Keyboard
-from psychopy import prefs, sound, core, event
-from psychopy.iohub import launchHubServer, util, client
+from psychopy import prefs, sound, core, event, data, visual, iohub
+from psychopy.iohub.client.eyetracker.validation import TargetStim
+from psychopy.iohub.client import launchHubServer, ioHubConnection, yload, yLoader
+from psychopy.iohub.util import hideWindow, showWindow
+from psychopy.iohub.datastore.util import saveEventReport
 import pandas as pd
+import pylink as pl
 import os
-import pylink
 import random
 
 ### DIALOGUE BOX ROUTINE ###
-exp_info = {'participant': '', 'subgroup': 0, 'version': 0}
+
+exp_info = {'participant': 0, 'subgroup': 0, 'version': 0, 'rotation': ''}
 dlg = DlgFromDict(exp_info)
 
-# iohub config file
-iohub_config = 'iohub_config.yaml'
-# Import config file
-io_config = util.readConfig(iohub_config)
+### DIALOGUE BOX ROUTINE END ###
 
 # If pressed Cancel, abort!
 if not dlg.OK:
@@ -36,54 +37,128 @@ else:
                     version {exp_info['version']}''')
                  
 
-# Initialize a fullscreen window with correct monitor (check monitor centre)
-win = Window(size=(1920, 1080), fullscr=False, monitor='ThinkPadX1C9')
+# Set the rotation type (male or female)
+rotation_type = exp_info['rotation']
 
-# Also initialize a mouse, for later
-# We'll set it to invisible for now
-mouse = Mouse(visible=False)
+# Make subgroup and version strings for concatenation and saving
+subgroup = str(exp_info['subgroup'])
+version = str(exp_info['version'])
+part = str(exp_info['participant'])
 
-# Initialize a (global) clock
-clock = Clock()
-
-# Initialize a (trial) clock
-trial_clock = Clock()
-
-# Initialize Keyboard
-kb = Keyboard()
+session_info = (f"{part}_sub{subgroup}_ver{version}")
 
 ### EYE TRACKER SETUP ###
 
-# Connect to the tracker (ip 100.1.1.1)
-tk = pylink.EyeLink(None) # Use 'None' when not connected to eye-link
-# Open EDF file
-tk.openDataFile('genste2.edf')
-# Set sample rate
-tk.sendCommand("sample_rate 1000")
+# Eye tracker to use ('mouse', 'eyelink', 'gazepoint', or 'tobii')
+TRACKER = 'eyelink'
+BACKGROUND_COLOR = [128, 128, 128]
 
-### CALIBRATION ###
-#pylink.openGraphics()
-#tk.doTrackerSetup()
-#pylink.closeGraphics()
+devices_config = dict()
+eyetracker_config = dict(name='tracker')
+if TRACKER == 'mouse':
+    eyetracker_config['calibration'] = dict(screen_background_color=BACKGROUND_COLOR)
+    devices_config['eyetracker.hw.mouse.EyeTracker'] = eyetracker_config
+elif TRACKER == 'eyelink':
+    eyetracker_config['model_name'] = 'EYELINK 1000 DESKTOP'
+    eyetracker_config['runtime_settings'] = dict(sampling_rate=1000, track_eyes=' ')
+    eyetracker_config['calibration'] = dict(screen_background_color=BACKGROUND_COLOR)
+    devices_config['eyetracker.hw.sr_research.eyelink.EyeTracker'] = eyetracker_config
+elif TRACKER == 'gazepoint':
+    eyetracker_config['calibration'] = dict(use_builtin=False, screen_background_color=BACKGROUND_COLOR)
+    devices_config['eyetracker.hw.gazepoint.gp3.EyeTracker'] = eyetracker_config
+elif TRACKER == 'tobii':
+    eyetracker_config['calibration'] = dict(screen_background_color=BACKGROUND_COLOR)
+    devices_config['eyetracker.hw.tobii.EyeTracker'] = eyetracker_config
+else:
+    print("{} is not a valid TRACKER name; please use 'mouse', 'eyelink', 'gazepoint', or 'tobii'.".format(TRACKER))
+    core.quit()
+
+win = visual.Window((1920, 1080),
+                    units='pix',
+                    fullscr=False,
+                    allowGUI=False,
+                    colorSpace='rgb255',
+                    monitor='sls_Dell',
+                    color=BACKGROUND_COLOR,
+                    screen=0
+                    )
+                    
+io = launchHubServer(window=win, 
+                    **devices_config, 
+                    experiment_code='Gender Stereotypes',
+                    session_code=session_info)
+                
+# Specify the iohub .hdf5 file to process. None will prompt for file selection when script is run.
+#IOHUB_DATA_FILE = session_code
+# Specify which event type to save. Setting to None will prompt to select an event table
+SAVE_EVENT_TYPE = 'MonocularEyeSampleEvent'  # 'MonocularEyeSampleEvent'
+# Specify which event fields to save. Setting to None will save all event fields.
+SAVE_EVENT_FIELDS = None  # ['time', 'gaze_x', 'gaze_y', 'pupil_measure1', 'status']
+
+# Specify the experiment message text used to split events into trial periods.
+# Set both to None to save all events.
+TRIAL_START = 'trial.start' #'text.started' #  'target.started'
+TRIAL_END = 'trial.end' #'fix_end_stim.started' #  'fix_end_stim.started'
+
+# Get some iohub devices for future access.
+keyboard = io.getDevice('keyboard')
+tracker = io.getDevice('tracker')
+
+# Calibration
+# Minimize the PsychoPy window if needed
+hideWindow(win)
+# Display calibration gfx window and run calibration.
+result = tracker.runSetupProcedure()
+print("Calibration returned: ", result)
+# Maximize the PsychoPy window if needed
+showWindow(win)
 
 ### EYE TRACKER SETUP END ###
 
-# Path to audio stims file
-stims_file = 'stims_file.csv'
-# Create pandas dataframe
-stims_file = pd.read_csv(stims_file)
+# Initialize a mouse set to invisible
+mouse = Mouse(visible=False)
+# Initialize a (global) clock
+clock = Clock()
+# Initialize a (trial) clock
+trial_clock = Clock()
+# Initialize Keyboard
+kb = Keyboard()
+
+# Setup paths to subgroup stims files
+subgroup1version1_F = 'subgroup1version1_F.csv'
+subgroup1version1_M = 'subgroup1version1_M.csv'
+# Create pandas dataframes
+subgroup1version1_F = pd.read_csv(subgroup1version1_F)
+subgroup1version1_M = pd.read_csv(subgroup1version1_M)
 # Shuffle rows in the stims file using pandas sample (frac=1 is 100% of rows)
-stims_file = stims_file.sample(frac = 1).reset_index()
+subgroup1version1_F = subgroup1version1_F.sample(frac = 1).reset_index()
+subgroup1version1_M = subgroup1version1_M.sample(frac = 1).reset_index()
+
+# Create trial lists by passing a dataframe or a dictionary
+# These are iterated over in the main experiment loop
+
+# Practice trials
+# Extract values to list for each column for male and female sets
+
+# Main trials
+# Extract values to list for each column for male and female sets
+section_list_F = subgroup1version1_F['Section'].tolist()
+section_list_M = subgroup1version1_M['Section'].tolist()
+id_list_F = subgroup1version1_F['ID'].tolist()
+id_list_M = subgroup1version1_M['ID'].tolist()
+prime_list_F = subgroup1version1_F['Prime'].tolist()
+prime_list_M = subgroup1version1_M['Prime'].tolist()
+target_list_F = subgroup1version1_F['Target'].tolist()
+target_listM = subgroup1version1_M['Target'].tolist()
+question_list_F = subgroup1version1_F['Question'].tolist()
+question_list_M = subgroup1version1_M['Question'].tolist()
+
+# Create trial handler from the pandas dataframe
+#trials = data.TrialHandler(trialList=stims_file.to_dict('records'), nReps=1, method='sequential')
 
 # Audio directories
 prime_folder = '../primes'
 target_folder = '../targets'
-
-# Extract values to list for each column
-trial_list = stims_file['trial'].tolist()
-prime_list = stims_file['prime'].tolist()
-target_list = stims_file['target'].tolist()
-question_list = stims_file['question'].tolist()
 
 # Instructions
 
@@ -93,7 +168,7 @@ Your task is to combine the two parts together in your head to form a sentence.
 In some trials you will be asked a yes or no question after hearing both parts.
 Please use the left and right arrow keys to answer the question.
 
-There will now be a short practice. PLease press 'enter' to continue.
+There will now be a short practice. Please press 'enter' to continue.
 '''
 # True or false question text
 true_false_text1 = '左 = 不是    |    右 = 是的'
@@ -106,16 +181,14 @@ Please press ‘enter’ to end the experiment.'''
 ### START BODY OF EXPERIMENT ###
 
 # Set up all of the display text except the question stims (in main trial loop)
-welcome_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', text="Welcome to this experiment!")
-instruct_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', text=instructions, alignText='center')
+welcome_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', units='norm', text="Welcome to this experiment!")
+instruct_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', units='norm',text=instructions, alignText='center')
 
-true_false_stim1 = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', text=true_false_text1, alignText='center', pos=(0, -0.2))
-true_false_stim2 = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', text=true_false_text2, alignText='center', pos=(0, -0.2))
+true_false_stim1 = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=true_false_text1, alignText='center', pos=(0, -0.2))
+true_false_stim2 = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=true_false_text2, alignText='center', pos=(0, -0.2))
 
-thankYou_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', text=thankYou, alignText='left')
-fixation = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', text="+")
-
-
+thankYou_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', units='norm', text=thankYou, alignText='left')
+fixation = TextStim(win, color=(0.8,1.0,0.5), units='norm', font='Calibri', text="+")
 
 # Welcome window
 welcome_txt_stim.draw()
@@ -136,80 +209,91 @@ while True:
 
 ### SENTENCE ROUTINE ###
 
-# Start the eye tracker recording
-#tk.startRecording(1, 1, 1, 1)
-
-# The zip function combines iterable lists
-# The first element of each list is played before moving to the next
-# The index sets the current iteration and the values in parentheses are unpacked from the lists
-
-for index, (trial, prime, target, question) in enumerate(zip(trial_list, prime_list, target_list, question_list)):
-    #tk.sendMessage(f'Trial: {trial}')
-    # draw the fixation
-    fixation.draw()
-    win.flip()
-    core.wait(1.5)
-    win.flip()
-    clock.reset()
-    # Create a file path to the audio by concatenating audio_folder and intro
-    # Play the sentence prime
-    current_prime = os.path.join(prime_folder, prime)
-    prime_stim = sound.Sound(current_prime)
-    prime_stim.play()
-    core.wait(prime_stim.getDuration())
-    trial_clock.reset()
-    # Play the target audio
-    #tk.sendMessage(f'Target: {trial}')
-    fixation.draw()
-    win.flip()
-    core.wait(1.5)
-    win.flip()
-    current_target = os.path.join(target_folder, target)
-    target_stim = sound.Sound(current_target)
-    target_stim.play()
-    core.wait(target_stim.getDuration())
-    trial_clock.reset()
-    # Set up question
-    current_question = question
-    question_txt = TextStim(win, text=current_question, pos=(0, 0))
-    # Create 1/3 chance of question
-    # This checks whether the random number is 2 (show question)
-    question_num = random.randint(1,3)
-    if question_num == 2:
-        question_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', text=question, alignText='center')
-        question_stim.draw()
-        true_false_num = random.randint(1,2)
-        if true_false_num == 1:
-            true_false_stim1.draw()
-            win.flip()
-            # Check which key was pressed and record response
-            keys = event.waitKeys(keyList=["left", "right"])
-            if "left" in keys:
-                stims_file.loc[index, "response"] = "NO"
-            elif "right" in keys:
-                stims_file.loc[index, "response"] = "YES"
-        else:
-            true_false_stim2.draw()
-            win.flip()
-            keys = event.waitKeys(keyList=["left", "right"])
-            if "left" in keys:
-                stims_file.loc[index, "response"] = "YES"
-            elif "right" in keys:
-                stims_file.loc[index, "response"] = "NO"
-
-# Stop the eye tracker recording
-#tk.stopRecording()
+# Iterate over the trials in trial handler
+if rotation_type == 'f':
+    for index, (ID, Prime, Target, Question) in enumerate(zip(id_list_F, prime_list_F, target_list_F, question_list_F)):
+        trial_num = str(index)
+        io.clearEvents()
+        tracker.setRecordingState(True)
+        #prime = trial['prime']
+        #target = trial['target']
+        #question = trial['question']
+        # draw the fixation
+        io.sendMessageEvent(text='fixationtask_start', category=trial_num)
+        fixation.draw()
+        win.flip()
+        core.wait(1.5)
+        win.flip()
+        clock.reset()
+        # Get the latest gaze position in display coord space.
+        gpos = tracker.getLastGazePosition()
+        # Create a file path to the audio by concatenating audio_folder and intro
+        # Play the sentence prime
+        io.sendMessageEvent(text=TRIAL_START, category=trial_num)
+        current_prime = os.path.join(prime_folder, Prime)
+        prime_stim = sound.Sound(current_prime)
+        prime_stim.play()
+        core.wait(prime_stim.getDuration())
+        trial_clock.reset()
+        # Play the target audio
+        fixation.draw()
+        win.flip()
+        core.wait(1.5)
+        win.flip()
+        current_target = os.path.join(target_folder, Target)
+        target_stim = sound.Sound(current_target)
+        target_stim.play()
+        core.wait(target_stim.getDuration())
+        trial_clock.reset()
+        # Set up question
+        current_question = Question
+        #question_txt = TextStim(win, text=current_question, units='norm', pos=(0, 0))
+        # Create 1/3 chance of question
+        # This checks whether the random number is 2 (show question)
+        question_num = random.randint(1,3)
+        if question_num == 2:
+            question_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=Question, alignText='center')
+            question_stim.draw()
+            true_false_num = random.randint(1,2)
+            if true_false_num == 1:
+                true_false_stim1.draw()
+                win.flip()
+                # Check which key was pressed and record response
+                keys = event.waitKeys(keyList=["left", "right"])
+                if "left" in keys:
+                    subgroup1version1_F.loc[index, "Response"] = "FALSE"
+                elif "right" in keys:
+                    subgroup1version1_F.loc[index, "Response"] = "TRUE"
+            else:
+                true_false_stim2.draw()
+                win.flip()
+                keys = event.waitKeys(keyList=["left", "right"])
+                if "left" in keys:
+                    subgroup1version1_F.loc[index, "Response"] = "TRUE"
+                elif "right" in keys:
+                    subgroup1version1_F.loc[index, "Response"] = "FALSE"
+        io.sendMessageEvent(text=TRIAL_END, category=trial_num)
+        tracker.setRecordingState(False)
+        
 
 ### SENTENCE ROUTINE END ###
 
-# Make subgroup and version strings for concatenation
-subgroup = str(exp_info['subgroup'])
-version = str(exp_info['version'])
-part = exp_info['participant']
-
 # Save stims_file to csv
-stims_file.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
+subgroup1version1_F.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
 part+'_sub'+subgroup+'ver'+version+'_results.csv', encoding='utf_8_sig')
+
+# Save hdf5 file
+#hdf5FilePath=IOHUB_DATA_FILE
+if __name__ == '__main__':
+    result = saveEventReport(eventType=SAVE_EVENT_TYPE,
+                             eventFields=SAVE_EVENT_FIELDS,
+                             trialStart=TRIAL_START,
+                             trialStop=TRIAL_END)
+    if result:
+        file_saved, events_saved = result
+        print("Saved %d events to %s." % (events_saved, file_saved))
+    else:
+        raise RuntimeError("saveEventReport failed.")
 
 ### THANK YOU ROUTINE ###
 
@@ -219,6 +303,10 @@ while True:
     keys = kb.getKeys()
     contKey = event.waitKeys()
     if 'return' in contKey:
-        break
+        # End experiment
+        win.close()
+        tracker.setConnectionState(False)
+        core.quit()
 
 ### END THANK YOU ROUTINE ###
+

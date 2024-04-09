@@ -1,0 +1,6 @@
+﻿ID,Prime,Target,CorrrectA,code,Dur,Dur_ms,question
+1,F02_P05_minusHalfERB,计划,rel,46,2.12229,2122.29,说话人的计划被破坏了吗
+2,F02_P07_minusHalfERB,陶醉,unrel,46,2.561746,2561.746,说话人提到了美景吗
+3,F02_P02_plusHalfERB,明媚,unrel,46,2.185147,2185.147,说话人在谈论今天的天气吗
+4,F06_P04_plusHalfERB,政策,rel,46,1.956939,1956.939,政府推出新政策了吗
+5,F03_P01_plusHalfERB,便利,rel,46,2.766213,2766.213,说话人认为科技给生活带来了困扰吗
