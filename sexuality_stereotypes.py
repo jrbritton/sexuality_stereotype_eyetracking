@@ -4,6 +4,7 @@ from psychopy.core import Clock, quit, wait
 from psychopy.event import Mouse
 from psychopy.hardware.keyboard import Keyboard
 from psychopy import prefs, sound, core, event, data, visual, iohub
+prefs.hardware['audioLib'] = ['PTB']
 from psychopy.iohub.client.eyetracker.validation import TargetStim
 from psychopy.iohub.client import launchHubServer, ioHubConnection, yload, yLoader
 from psychopy.iohub.util import hideWindow, showWindow
@@ -15,7 +16,10 @@ import random
 
 ### DIALOGUE BOX ROUTINE ###
 
-exp_info = {'participant': 0, 'subgroup': 0, 'version': 0, 'rotation': ''}
+exp_info = {'participant': 0, 
+            'subgroup': 0, 
+            'version': 0, 
+            'rotation': ''} 
 dlg = DlgFromDict(exp_info)
 
 ### DIALOGUE BOX ROUTINE END ###
@@ -28,8 +32,10 @@ else:
     if not exp_info['participant']:
         quit()
     if exp_info['subgroup'] > 2 or exp_info['version'] > 2:
+        print("Error: Invalid subgroup or version. Please select '1' or '2'.")
         quit()
     if exp_info['subgroup'] < 1 or exp_info['version'] < 1:
+        print("Error: Invalid subgroup or version. Please select '1' or '2'.")
         quit()
     else:  # Start the experiment!
         print(f'''Started experiment for participant {exp_info['participant']},
@@ -60,7 +66,7 @@ if TRACKER == 'mouse':
     devices_config['eyetracker.hw.mouse.EyeTracker'] = eyetracker_config
 elif TRACKER == 'eyelink':
     eyetracker_config['model_name'] = 'EYELINK 1000 DESKTOP'
-    eyetracker_config['runtime_settings'] = dict(sampling_rate=250, track_eyes=' ')
+    eyetracker_config['runtime_settings'] = dict(sampling_rate=1000, track_eyes=' ')
     eyetracker_config['calibration'] = dict(screen_background_color=BACKGROUND_COLOR)
     devices_config['eyetracker.hw.sr_research.eyelink.EyeTracker'] = eyetracker_config
 elif TRACKER == 'gazepoint':
@@ -93,7 +99,7 @@ IOHUB_DATA_FILE = session_info+'.hdf5'
 # Specify which event type to save. Setting to None will prompt to select an event table
 SAVE_EVENT_TYPE = 'MonocularEyeSampleEvent'  # 'MonocularEyeSampleEvent'
 # Specify which event fields to save. Setting to None will save all event fields.
-SAVE_EVENT_FIELDS = ['time', 'pupil_measure1'] # ['time', 'gaze_x', 'gaze_y', 'pupil_measure1', 'status']
+SAVE_EVENT_FIELDS = None # ['time', 'gaze_x', 'gaze_y', 'pupil_measure1', 'status']
 
 # Specify the experiment message text used to split events into trial periods.
 # Set both to None to save all events.
@@ -190,6 +196,13 @@ true_false_stim2 = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm
 thankYou_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', units='norm', text=thankYou, alignText='left')
 fixation = TextStim(win, color=(0.8,1.0,0.5), units='norm', font='Calibri', text="+")
 
+fixation_cross = visual.ShapeStim(
+    win=win, name='polygon', vertices='cross',
+    size=(30, 30),
+    ori=0.0, pos=(0, 0), anchor='center',
+    lineWidth=1.0,     colorSpace='rgb',  lineColor='white', fillColor='white',
+    opacity=None, depth=0.0, interpolate=True)
+
 # Welcome window
 welcome_txt_stim.draw()
 win.flip()
@@ -217,9 +230,9 @@ if rotation_type == 'f':
         tracker.setRecordingState(True)
         # draw the fixation
         io.sendMessageEvent(text='fixationtask_start', category=trial_num)
-        fixation.draw()
+        fixation_cross.draw()
         win.flip()
-        core.wait(1.5)
+        core.wait(2.1)
         win.flip()
         clock.reset()
         # Create a file path to the audio by concatenating audio_folder and intro
@@ -234,7 +247,7 @@ if rotation_type == 'f':
         core.wait(prime_stim.getDuration())
         trial_clock.reset()
         # Play the target audio
-        fixation.draw()
+        fixation_cross.draw()
         win.flip()
         core.wait(1.5)
         win.flip()
@@ -260,19 +273,23 @@ if rotation_type == 'f':
                 true_false_stim1.draw()
                 win.flip()
                 # Check which key was pressed and record response
-                keys = event.waitKeys(keyList=["left", "right"])
+                keys = event.waitKeys(keyList=["left", "right", "q"])
                 if "left" in keys:
                     subgroup1version1_F.loc[index, "Response"] = "FALSE"
                 elif "right" in keys:
                     subgroup1version1_F.loc[index, "Response"] = "TRUE"
+                elif "q" in keys:
+                    core.quit()
             else:
                 true_false_stim2.draw()
                 win.flip()
-                keys = event.waitKeys(keyList=["left", "right"])
+                keys = event.waitKeys(keyList=["left", "right", "q"])
                 if "left" in keys:
                     subgroup1version1_F.loc[index, "Response"] = "TRUE"
                 elif "right" in keys:
                     subgroup1version1_F.loc[index, "Response"] = "FALSE"
+                elif "q" in keys:
+                    core.quit()
 
 ### SENTENCE ROUTINE END ###
 
