@@ -4,7 +4,6 @@ from psychopy.core import Clock, quit, wait
 from psychopy.event import Mouse
 from psychopy.hardware.keyboard import Keyboard
 from psychopy import prefs, sound, core, event, data, visual, iohub
-prefs.hardware['audioLib'] = ['PTB']
 from psychopy.iohub.client.eyetracker.validation import TargetStim
 from psychopy.iohub.client import launchHubServer, ioHubConnection, yload, yLoader
 from psychopy.iohub.util import hideWindow, showWindow
@@ -13,6 +12,10 @@ import pandas as pd
 import pylink as pl
 import os
 import random
+import csv
+
+# Set audio prefs
+prefs.hardware['audioLib'] = ['PTB', 'sounddevice', 'pyo', 'pygame']
 
 ### DIALOGUE BOX ROUTINE ###
 
@@ -47,9 +50,11 @@ else:
 rotation_type = exp_info['rotation']
 
 # Make subgroup and version strings for concatenation and saving
+part = str(exp_info['participant'])
 subgroup = str(exp_info['subgroup'])
 version = str(exp_info['version'])
-part = str(exp_info['participant'])
+rotation = str(exp_info['rotation'])
+
 
 session_info = (f"{part}_sub{subgroup}_ver{version}")
 
@@ -97,7 +102,7 @@ io = launchHubServer(window=win,
 # Specify the iohub .hdf5 file to process. None will prompt for file selection when script is run.
 IOHUB_DATA_FILE = session_info+'.hdf5'
 # Specify which event type to save. Setting to None will prompt to select an event table
-SAVE_EVENT_TYPE = 'MonocularEyeSampleEvent'  # 'MonocularEyeSampleEvent'
+SAVE_EVENT_TYPE = 'MonocularEyeSampleEvent' # 'MonocularEyeSampleEvent'
 # Specify which event fields to save. Setting to None will save all event fields.
 SAVE_EVENT_FIELDS = None # ['time', 'gaze_x', 'gaze_y', 'pupil_measure1', 'status']
 
@@ -131,14 +136,14 @@ trial_clock = Clock()
 kb = Keyboard()
 
 # Setup paths to subgroup stims files
-subgroup1version1_F = 'subgroup1version1_F.csv'
-subgroup1version1_M = 'subgroup1version1_M.csv'
+subgroup1version1_f = 'subgroup1version1_f.csv'
+subgroup1version1_m = 'subgroup1version1_m.csv'
 # Create pandas dataframes
-subgroup1version1_F = pd.read_csv(subgroup1version1_F)
-subgroup1version1_M = pd.read_csv(subgroup1version1_M)
+subgroup1version1_f = pd.read_csv(subgroup1version1_f)
+subgroup1version1_m = pd.read_csv(subgroup1version1_m)
 # Shuffle rows in the stims file using pandas sample (frac=1 is 100% of rows)
-subgroup1version1_F = subgroup1version1_F.sample(frac = 1).reset_index()
-subgroup1version1_M = subgroup1version1_M.sample(frac = 1).reset_index()
+subgroup1version1_f = subgroup1version1_f.sample(frac = 1).reset_index()
+subgroup1version1_m = subgroup1version1_m.sample(frac = 1).reset_index()
 
 # Create trial lists by passing a dataframe or a dictionary
 # These are iterated over in the main experiment loop
@@ -148,19 +153,56 @@ subgroup1version1_M = subgroup1version1_M.sample(frac = 1).reset_index()
 
 # Main trials
 # Extract values to list for each column for male and female sets
-section_list_F = subgroup1version1_F['Section'].tolist()
-section_list_M = subgroup1version1_M['Section'].tolist()
-id_list_F = subgroup1version1_F['ID'].tolist()
-id_list_M = subgroup1version1_M['ID'].tolist()
-prime_list_F = subgroup1version1_F['Prime'].tolist()
-prime_list_M = subgroup1version1_M['Prime'].tolist()
-target_list_F = subgroup1version1_F['Target'].tolist()
-target_listM = subgroup1version1_M['Target'].tolist()
-question_list_F = subgroup1version1_F['Question'].tolist()
-question_list_M = subgroup1version1_M['Question'].tolist()
+section_list_F = subgroup1version1_f['Section'].tolist()
+section_list_M = subgroup1version1_m['Section'].tolist()
+id_list_F = subgroup1version1_f['ID'].tolist()
+id_list_M = subgroup1version1_m['ID'].tolist()
+prime_list_F = subgroup1version1_f['Prime'].tolist()
+prime_list_M = subgroup1version1_m['Prime'].tolist()
+target_list_F = subgroup1version1_f['Target'].tolist()
+target_list_M = subgroup1version1_m['Target'].tolist()
+question_list_F = subgroup1version1_f['Question'].tolist()
+question_list_M = subgroup1version1_m['Question'].tolist()
 
 # Create trial handler from pandas dataframe
-#trials = data.TrialHandler(trialList=stims_file.to_dict('records'), nReps=1, method='sequential')
+#trials = data.TrialHandler(subgroup1version1_f, 10,
+#                           extraInfo={'participant': part, 'subgroup': subgroup, 'version': version})
+
+# Read CSV file into a list of dictionaries
+#def read_trials_from_csv(filename):
+#    with open(filename, 'r', encoding='utf-8') as csvfile:
+#        reader = csv.DictReader(csvfile)
+#        trials = [ID for ID in reader]
+#    return trials
+#
+# Split trials into blocks based on group labels
+#def split_trials_into_blocks(trials):
+#    blocks = {}
+#    for trial in trials:
+#        group = trial['group']
+#        if group not in blocks:
+#            blocks[group] = []
+#        blocks[group].append(trial)
+#    return blocks
+#
+# Shuffle the order of the blocks
+#def shuffle_blocks_order(blocks):
+#    block_order = list(blocks.keys())
+#    random.shuffle(block_order)
+#    shuffled_blocks = {key: blocks[key] for key in block_order}
+#    return shuffled_blocks
+#
+# Shuffle trials within each block
+#def shuffle_trials_within_blocks(blocks):
+#    for block_trials in blocks.values():
+#        random.shuffle(block_trials)
+#
+# Example usage
+#firstrun = 'subgroup'+subgroup+'version'+version+'_'+rotation+'.csv'
+#trials1 = read_trials_from_csv(firstrun)
+#blocks1 = split_trials_into_blocks(trials1)
+#shuffled_blocks1 = shuffle_blocks_order(blocks1)
+#shuffled_blocks1 = shuffle_trials_within_blocks(shuffled_blocks1)
 
 # Audio directories
 prime_folder = '../primes'
@@ -217,85 +259,120 @@ while True:
     contKey = event.waitKeys()
     if 'return' in contKey:
         break
-        
+
 ### INSTRUCTIONS ROUTINE END ###
 
 ### SENTENCE ROUTINE ###
 
 # Iterate over the trials based on rotation
 if rotation_type == 'f':
-    for index, (ID, Prime, Target, Question) in enumerate(zip(id_list_F, prime_list_F, target_list_F, question_list_F)):
-        trial_num = str(index)
-        io.clearEvents()
-        tracker.setRecordingState(True)
-        # draw the fixation
-        io.sendMessageEvent(text='fixationtask_start', category=trial_num)
-        fixation_cross.draw()
-        win.flip()
-        core.wait(2.1)
-        win.flip()
-        clock.reset()
-        # Create a file path to the audio by concatenating audio_folder and intro
-        # Play the sentence prime
-        io.sendMessageEvent(text=TRIAL_START, category=trial_num)
-        # Get pupil and other info
-        tracker.getLastSample()
-        # Set up stim
-        current_prime = os.path.join(prime_folder, Prime)
-        prime_stim = sound.Sound(current_prime)
-        prime_stim.play()
-        core.wait(prime_stim.getDuration())
-        trial_clock.reset()
-        # Play the target audio
-        fixation_cross.draw()
-        win.flip()
-        core.wait(1.5)
-        win.flip()
-        current_target = os.path.join(target_folder, Target)
-        target_stim = sound.Sound(current_target)
-        target_stim.play()
-        core.wait(target_stim.getDuration())
-        trial_clock.reset()
-        # Get pupil and other info
-        tracker.getLastSample()
-        io.sendMessageEvent(text=TRIAL_END, category=trial_num)
-        tracker.setRecordingState(False)
-        # Set up question
-        current_question = Question
-        # Create 1/3 chance of question
-        # This checks whether the random number is 2 (show question)
-        question_num = random.randint(1,3)
-        if question_num == 2:
-            question_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=Question, alignText='center')
-            question_stim.draw()
-            true_false_num = random.randint(1,2)
-            if true_false_num == 1:
-                true_false_stim1.draw()
-                win.flip()
-                # Check which key was pressed and record response
-                keys = event.waitKeys(keyList=["left", "right", "q"])
-                if "left" in keys:
-                    subgroup1version1_F.loc[index, "Response"] = "FALSE"
-                elif "right" in keys:
-                    subgroup1version1_F.loc[index, "Response"] = "TRUE"
-                elif "q" in keys:
-                    core.quit()
-            else:
-                true_false_stim2.draw()
-                win.flip()
-                keys = event.waitKeys(keyList=["left", "right", "q"])
-                if "left" in keys:
-                    subgroup1version1_F.loc[index, "Response"] = "TRUE"
-                elif "right" in keys:
-                    subgroup1version1_F.loc[index, "Response"] = "FALSE"
-                elif "q" in keys:
-                    core.quit()
+    trial_list = enumerate(zip(id_list_F, prime_list_F, target_list_F, question_list_F))
+if rotation_type == 'm':
+    trial_list = enumerate(zip(id_list_M, prime_list_M, target_list_M, question_list_M))
+    
+for index, (ID, Prime, Target, Question) in trial_list:
+    interest_region = visual.Circle(win, lineColor=None, radius=200, units='pix')
+    trial_num = str(index)
+    io.clearEvents()
+    tracker.setRecordingState(True)
+    # draw the fixation
+    io.sendMessageEvent(text='fixationtask_start', category=trial_num)
+    fixation_cross.draw()
+    win.flip()
+    core.wait(2.1)
+    win.flip()
+    clock.reset()
+    # Get the latest gaze position in display coord space.
+#    gpos = tracker.getLastGazePosition()
+#    # Update stim based on gaze position
+#    valid_gaze_pos = isinstance(gpos, (tuple, list))
+#    gaze_in_region = valid_gaze_pos and interest_region.contains(gpos)
+#    if valid_gaze_pos:
+#        # If we have a gaze position from the tracker, update gc stim and text stim.
+#        if gaze_in_region:
+#            gaze_in_region = 'Yes'
+#            io.sendMessageEvent(text='gaze good', category=trial_num)
+#        else:
+#            gaze_in_region = 'No'
+#            io.sendMessageEvent(text='gaze bad', category=trial_num)
+    # Create a file path to the audio by concatenating audio_folder and intro
+    # Play the sentence prime
+    io.sendMessageEvent(text=TRIAL_START, category=trial_num)
+    # Get the latest gaze position in display coord space.
+    gpos = tracker.getLastGazePosition()
+#    # Update stim based on gaze position
+#    valid_gaze_pos = isinstance(gpos, (tuple, list))
+#    gaze_in_region = valid_gaze_pos and interest_region.contains(gpos)
+#    if valid_gaze_pos:
+#        # If we have a gaze position from the tracker, update gc stim and text stim.
+#        if gaze_in_region:
+#            gaze_in_region = 'Yes'
+#            io.sendMessageEvent(text='gaze good', category=trial_num)
+#        else:
+#            gaze_in_region = 'No'
+#            io.sendMessageEvent(text='gaze bad', category=trial_num)
+    # Get pupil and other info
+    tracker.getLastSample()
+    # Set up stim
+    current_prime = os.path.join(prime_folder, Prime)
+    prime_stim = sound.Sound(current_prime)
+    prime_stim.play()
+    core.wait(prime_stim.getDuration())
+    trial_clock.reset()
+    # Play the target audio
+    fixation_cross.draw()
+    win.flip()
+    core.wait(1.5)
+    win.flip()
+    current_target = os.path.join(target_folder, Target)
+    target_stim = sound.Sound(current_target)
+    target_stim.play()
+    core.wait(target_stim.getDuration())
+    trial_clock.reset()
+    # Get pupil and other info
+    tracker.getLastSample()
+    io.sendMessageEvent(text=TRIAL_END, category=trial_num)
+    tracker.setRecordingState(False)
+    # Set up question
+    current_question = Question
+    # Create 1/3 chance of question
+    # This checks whether the random number is 2 (show question)
+    question_num = random.randint(1,3)
+    if question_num == 2:
+        question_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=Question, alignText='center')
+        question_stim.draw()
+        true_false_num = random.randint(1,2)
+        if true_false_num == 1:
+            true_false_stim1.draw()
+            win.flip()
+            # Check which key was pressed and record response
+            keys = event.waitKeys(keyList=["left", "right", "q"])
+            if "left" in keys:
+                subgroup1version1_f.loc[index, "Response"] = "FALSE"
+            elif "right" in keys:
+                subgroup1version1_f.loc[index, "Response"] = "TRUE"
+            elif "q" in keys:
+                core.quit()
+        else:
+            true_false_stim2.draw()
+            win.flip()
+            keys = event.waitKeys(keyList=["left", "right", "q"])
+            if "left" in keys:
+                subgroup1version1_f.loc[index, "Response"] = "TRUE"
+            elif "right" in keys:
+                subgroup1version1_f.loc[index, "Response"] = "FALSE"
+            elif "q" in keys:
+                core.quit()
 
 ### SENTENCE ROUTINE END ###
 
 # Save stims_file to csv
-subgroup1version1_F.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
-part+'_sub'+subgroup+'ver'+version+'_results.csv', encoding='utf_8_sig')
+if rotation_type == 'f':
+    subgroup1version1_f.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
+    part+'_sub'+subgroup+'ver'+version+'_results.csv', encoding='utf_8_sig')
+if rotation_type == 'm':
+    subgroup1version1_m.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
+    part+'_sub'+subgroup+'ver'+version+'_results.csv', encoding='utf_8_sig')    
 
 # Save hdf5 file
 if __name__ == '__main__':
