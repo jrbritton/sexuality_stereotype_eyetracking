@@ -164,46 +164,6 @@ target_list_M = subgroup1version1_m['Target'].tolist()
 question_list_F = subgroup1version1_f['Question'].tolist()
 question_list_M = subgroup1version1_m['Question'].tolist()
 
-# Create trial handler from pandas dataframe
-#trials = data.TrialHandler(subgroup1version1_f, 10,
-#                           extraInfo={'participant': part, 'subgroup': subgroup, 'version': version})
-
-# Read CSV file into a list of dictionaries
-#def read_trials_from_csv(filename):
-#    with open(filename, 'r', encoding='utf-8') as csvfile:
-#        reader = csv.DictReader(csvfile)
-#        trials = [ID for ID in reader]
-#    return trials
-#
-# Split trials into blocks based on group labels
-#def split_trials_into_blocks(trials):
-#    blocks = {}
-#    for trial in trials:
-#        group = trial['group']
-#        if group not in blocks:
-#            blocks[group] = []
-#        blocks[group].append(trial)
-#    return blocks
-#
-# Shuffle the order of the blocks
-#def shuffle_blocks_order(blocks):
-#    block_order = list(blocks.keys())
-#    random.shuffle(block_order)
-#    shuffled_blocks = {key: blocks[key] for key in block_order}
-#    return shuffled_blocks
-#
-# Shuffle trials within each block
-#def shuffle_trials_within_blocks(blocks):
-#    for block_trials in blocks.values():
-#        random.shuffle(block_trials)
-#
-# Example usage
-#firstrun = 'subgroup'+subgroup+'version'+version+'_'+rotation+'.csv'
-#trials1 = read_trials_from_csv(firstrun)
-#blocks1 = split_trials_into_blocks(trials1)
-#shuffled_blocks1 = shuffle_blocks_order(blocks1)
-#shuffled_blocks1 = shuffle_trials_within_blocks(shuffled_blocks1)
-
 # Audio directories
 prime_folder = '../primes'
 target_folder = '../targets'
@@ -279,39 +239,10 @@ for index, (ID, Prime, Target, Question) in trial_list:
     io.sendMessageEvent(text='fixationtask_start', category=trial_num)
     fixation_cross.draw()
     win.flip()
-    core.wait(2.1)
-    win.flip()
     clock.reset()
-    # Get the latest gaze position in display coord space.
-#    gpos = tracker.getLastGazePosition()
-#    # Update stim based on gaze position
-#    valid_gaze_pos = isinstance(gpos, (tuple, list))
-#    gaze_in_region = valid_gaze_pos and interest_region.contains(gpos)
-#    if valid_gaze_pos:
-#        # If we have a gaze position from the tracker, update gc stim and text stim.
-#        if gaze_in_region:
-#            gaze_in_region = 'Yes'
-#            io.sendMessageEvent(text='gaze good', category=trial_num)
-#        else:
-#            gaze_in_region = 'No'
-#            io.sendMessageEvent(text='gaze bad', category=trial_num)
-    # Create a file path to the audio by concatenating audio_folder and intro
-    # Play the sentence prime
     io.sendMessageEvent(text=TRIAL_START, category=trial_num)
-    # Get the latest gaze position in display coord space.
+    # Get the latest gaze position
     gpos = tracker.getLastGazePosition()
-#    # Update stim based on gaze position
-#    valid_gaze_pos = isinstance(gpos, (tuple, list))
-#    gaze_in_region = valid_gaze_pos and interest_region.contains(gpos)
-#    if valid_gaze_pos:
-#        # If we have a gaze position from the tracker, update gc stim and text stim.
-#        if gaze_in_region:
-#            gaze_in_region = 'Yes'
-#            io.sendMessageEvent(text='gaze good', category=trial_num)
-#        else:
-#            gaze_in_region = 'No'
-#            io.sendMessageEvent(text='gaze bad', category=trial_num)
-    # Get pupil and other info
     tracker.getLastSample()
     # Set up stim
     current_prime = os.path.join(prime_folder, Prime)
@@ -319,20 +250,23 @@ for index, (ID, Prime, Target, Question) in trial_list:
     prime_stim.play()
     core.wait(prime_stim.getDuration())
     trial_clock.reset()
-    # Play the target audio
-    fixation_cross.draw()
     win.flip()
+    # Play the target audio
     core.wait(1.5)
+    fixation_cross.draw()
     win.flip()
     current_target = os.path.join(target_folder, Target)
     target_stim = sound.Sound(current_target)
     target_stim.play()
     core.wait(target_stim.getDuration())
+    core.wait(2.7)
     trial_clock.reset()
     # Get pupil and other info
     tracker.getLastSample()
     io.sendMessageEvent(text=TRIAL_END, category=trial_num)
     tracker.setRecordingState(False)
+    win.flip()
+    core.wait(1)
     # Set up question
     current_question = Question
     # Create 1/3 chance of question
@@ -363,6 +297,8 @@ for index, (ID, Prime, Target, Question) in trial_list:
                 subgroup1version1_f.loc[index, "Response"] = "FALSE"
             elif "q" in keys:
                 core.quit()
+    win.flip()
+    core.wait(1)
 
 ### SENTENCE ROUTINE END ###
 
