@@ -54,14 +54,12 @@ part = str(exp_info['participant'])
 subgroup = str(exp_info['subgroup'])
 version = str(exp_info['version'])
 rotation = str(exp_info['rotation'])
-
-
-session_info = (f"{part}_sub{subgroup}_ver{version}")
+session_info = (f"{part}_sub{subgroup}_ver{version}_{rotation}")
 
 ### EYE TRACKER SETUP ###
 
 # Eye tracker to use ('mouse', 'eyelink', 'gazepoint', or 'tobii')
-TRACKER = 'eyelink'
+TRACKER = 'mouse'
 BACKGROUND_COLOR = [128, 128, 128]
 
 devices_config = dict()
@@ -138,12 +136,67 @@ kb = Keyboard()
 # Setup paths to subgroup stims files
 subgroup1version1_f = 'subgroup1version1_f.csv'
 subgroup1version1_m = 'subgroup1version1_m.csv'
-# Create pandas dataframes
-subgroup1version1_f = pd.read_csv(subgroup1version1_f)
-subgroup1version1_m = pd.read_csv(subgroup1version1_m)
-# Shuffle rows in the stims file using pandas sample (frac=1 is 100% of rows)
-subgroup1version1_f = subgroup1version1_f.sample(frac = 1).reset_index()
-subgroup1version1_m = subgroup1version1_m.sample(frac = 1).reset_index()
+
+# Create trial list based on session info
+if subgroup == 1 and version == 1 and rotation == 'f':
+    trial_list = pd.read_csv(subgroup1version1_f)
+elif subgroup == 1 and version == 2 and rotation == 'f':
+    trial_list = pd.read_csv(subgroup1version2_f)
+elif subgroup == 2 and version == 1 and rotation == 'f':
+    trial_list = pd.read_csv(subgroup2version1_f)
+elif subgroup == 2 and version == 2 and rotation == 'f':
+    trial_list = pd.read_csv(subgroup2version2_f)
+elif subgroup == 1 and version == 1 and rotation == 'm':
+    trial_list = pd.read_csv(subgroup1version1_m)
+elif subgroup == 1 and version == 2 and rotation == 'm':
+    trial_list = pd.read_csv(subgroup1version2_m)
+elif subgroup == 2 and version == 1 and rotation == 'm':
+    trial_list = pd.read_csv(subgroup2version1_m)    
+elif subgroup == 2 and version == 2 and rotation == 'm':
+    trial_list = pd.read_csv(subgroup2version2_m)    
+
+# Shuffle rows in the trial_list using pandas sample (frac=1 is 100% of rows)
+trial_list = trial_list.sample(frac = 1).reset_index()
+
+# Create all possible orders for 1 - 4
+# Randomly select one to sort by
+
+orderDict = {'1': [1,2,3,4],
+             '2': [1,2,4,3],
+             '3': [1,3,2,4],
+             '4': [1,3,4,2],
+             '5': [1,4,2,3],
+             '6': [1,4,3,2],
+             '7': [2,1,3,4],
+             '8': [2,1,4,3],
+             '9': [2,3,1,4],
+             '10': [2,3,4,1],
+             '11': [2,4,1,3],
+             '12': [2,4,3,1],
+             '13': [3,1,2,4],
+             '14': [3,1,4,2],
+             '15': [3,2,1,4],
+             '16': [3,2,4,1],
+             '17': [3,4,1,2],
+             '18': [3,4,2,1],
+             '19': [4,1,2,3],
+             '20': [4,1,3,2],
+             '21': [4,2,1,3],
+             '22': [4,2,3,1],
+             '23': [4,3,1,2],
+             '24': [4,3,2,1]
+             }
+             
+# Select a number from 1 - 24 to use as a key to select an order
+orderNum = random.randint(1,24)
+# Define order sequence
+orderSeq = orderDict[f'{orderNum}']
+
+# Convert Section to categorical and use orderSeq to sort
+trial_list['Section'] = pd.Categorical(trial_list['Section'], categories=orderSeq, ordered=True)
+
+# Sort the frame based on Section
+trial_list = subgroup_test.sort_values(by='Section')
 
 # Create trial lists by passing a dataframe or a dictionary
 # These are iterated over in the main experiment loop
@@ -152,17 +205,12 @@ subgroup1version1_m = subgroup1version1_m.sample(frac = 1).reset_index()
 # Extract values to list for each column for male and female sets
 
 # Main trials
-# Extract values to list for each column for male and female sets
-section_list_F = subgroup1version1_f['Section'].tolist()
-section_list_M = subgroup1version1_m['Section'].tolist()
-id_list_F = subgroup1version1_f['ID'].tolist()
-id_list_M = subgroup1version1_m['ID'].tolist()
-prime_list_F = subgroup1version1_f['Prime'].tolist()
-prime_list_M = subgroup1version1_m['Prime'].tolist()
-target_list_F = subgroup1version1_f['Target'].tolist()
-target_list_M = subgroup1version1_m['Target'].tolist()
-question_list_F = subgroup1version1_f['Question'].tolist()
-question_list_M = subgroup1version1_m['Question'].tolist()
+# Extract values to list for each column for trial_list
+section_list = trial_list['Section'].tolist()
+id_list = trial_list['ID'].tolist()
+prime_list = trial_list['Prime'].tolist()
+target_list = trial_list['Target'].tolist()
+question_list = trial_list['Question'].tolist()
 
 # Audio directories
 prime_folder = '../primes'
@@ -225,12 +273,9 @@ while True:
 ### SENTENCE ROUTINE ###
 
 # Iterate over the trials based on rotation
-if rotation_type == 'f':
-    trial_list = enumerate(zip(id_list_F, prime_list_F, target_list_F, question_list_F))
-if rotation_type == 'm':
-    trial_list = enumerate(zip(id_list_M, prime_list_M, target_list_M, question_list_M))
+trials = enumerate(zip(id_list, prime_list, target_list, question_list))
     
-for index, (ID, Prime, Target, Question) in trial_list:
+for index, (ID, Prime, Target, Question) in trials:
     interest_region = visual.Circle(win, lineColor=None, radius=200, units='pix')
     trial_num = str(index)
     io.clearEvents()
@@ -304,13 +349,9 @@ for index, (ID, Prime, Target, Question) in trial_list:
 
 ### SENTENCE ROUTINE END ###
 
-# Save stims_file to csv
-if rotation_type == 'f':
-    subgroup1version1_f.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
-    part+'_sub'+subgroup+'ver'+version+'_results.csv', encoding='utf_8_sig')
-if rotation_type == 'm':
-    subgroup1version1_m.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
-    part+'_sub'+subgroup+'ver'+version+'_results.csv', encoding='utf_8_sig')    
+# Save trial_list to csv
+trial_list.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
+    part+'_sub'+subgroup+'ver'+version+'_'+rotation+'_results.csv', encoding='utf_8_sig'
 
 # Save hdf5 file
 if __name__ == '__main__':
