@@ -138,21 +138,22 @@ subgroup1version1_f = 'subgroup1version1_f.csv'
 subgroup1version1_m = 'subgroup1version1_m.csv'
 
 # Create trial list based on session info
-if subgroup == 1 and version == 1 and rotation == 'f':
+# Note: subgroup and version are strings here (see line 52)
+if subgroup == '1' and version == '1' and rotation == 'f':
     trial_list = pd.read_csv(subgroup1version1_f)
-elif subgroup == 1 and version == 2 and rotation == 'f':
+elif subgroup == '1' and version == '2' and rotation == 'f':
     trial_list = pd.read_csv(subgroup1version2_f)
-elif subgroup == 2 and version == 1 and rotation == 'f':
+elif subgroup == '2' and version == '1' and rotation == 'f':
     trial_list = pd.read_csv(subgroup2version1_f)
-elif subgroup == 2 and version == 2 and rotation == 'f':
+elif subgroup == '2' and version == '2' and rotation == 'f':
     trial_list = pd.read_csv(subgroup2version2_f)
-elif subgroup == 1 and version == 1 and rotation == 'm':
+elif subgroup == '1' and version == '1' and rotation == 'm':
     trial_list = pd.read_csv(subgroup1version1_m)
-elif subgroup == 1 and version == 2 and rotation == 'm':
+elif subgroup == '1' and version == '2' and rotation == 'm':
     trial_list = pd.read_csv(subgroup1version2_m)
-elif subgroup == 2 and version == 1 and rotation == 'm':
+elif subgroup == '2' and version == '1' and rotation == 'm':
     trial_list = pd.read_csv(subgroup2version1_m)    
-elif subgroup == 2 and version == 2 and rotation == 'm':
+elif subgroup == '2' and version == '2' and rotation == 'm':
     trial_list = pd.read_csv(subgroup2version2_m)    
 
 # Shuffle rows in the trial_list using pandas sample (frac=1 is 100% of rows)
@@ -196,7 +197,7 @@ orderSeq = orderDict[f'{orderNum}']
 trial_list['Section'] = pd.Categorical(trial_list['Section'], categories=orderSeq, ordered=True)
 
 # Sort the frame based on Section
-trial_list = subgroup_test.sort_values(by='Section')
+trial_list = trial_list.sort_values(by='Section')
 
 # Create trial lists by passing a dataframe or a dictionary
 # These are iterated over in the main experiment loop
@@ -226,6 +227,10 @@ Please use the left and right arrow keys to answer the question.
 
 There will now be a short practice. Please press 'enter' to continue.
 '''
+
+# Break text
+break_text = '请休息一下。 当您准备好继续时，请按“输入。'
+
 # True or false question text
 true_false_text1 = '左 = 不是    |    右 = 是的'
 true_false_text2 = '左 = 是的    |    右 = 不是'
@@ -273,12 +278,35 @@ while True:
 ### SENTENCE ROUTINE ###
 
 # Iterate over the trials based on rotation
-trials = enumerate(zip(id_list, prime_list, target_list, question_list))
-    
-for index, (ID, Prime, Target, Question) in trials:
+trials = enumerate(zip(section_list, id_list, prime_list, target_list, question_list))
+trial = 0
+for index, (ID, Section, Prime, Target, Question) in trials:
     interest_region = visual.Circle(win, lineColor=None, radius=200, units='pix')
     trial_num = str(index)
+    trial += 1
+    trial_list.loc[index, "Trial"] = trial
     io.clearEvents()
+    if trial == 26:
+        break_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=break_text, alignText='center')
+        break_message.draw()
+        win.flip()
+        contKey = event.waitKeys()
+        if 'return' in contKey:
+            continue
+    elif trial == 51:
+        break_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=break_text, alignText='center')
+        break_message.draw()
+        win.flip()
+        contKey = event.waitKeys()
+        if 'return' in contKey:
+            continue
+    elif trial == 76:
+        break_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=break_text, alignText='center')
+        break_message.draw()
+        win.flip()
+        contKey = event.waitKeys()
+        if 'return' in contKey:
+            continue
     tracker.setRecordingState(True)
     # draw the fixation
     io.sendMessageEvent(text='fixationtask_start', category=trial_num)
@@ -329,9 +357,9 @@ for index, (ID, Prime, Target, Question) in trials:
             # Check which key was pressed and record response
             keys = event.waitKeys(keyList=["left", "right", "q"])
             if "left" in keys:
-                subgroup1version1_f.loc[index, "Response"] = "FALSE"
+                trial_list.loc[index, "Response"] = "FALSE"
             elif "right" in keys:
-                subgroup1version1_f.loc[index, "Response"] = "TRUE"
+                trial_list.loc[index, "Response"] = "TRUE"
             elif "q" in keys:
                 core.quit()
         else:
@@ -339,9 +367,9 @@ for index, (ID, Prime, Target, Question) in trials:
             win.flip()
             keys = event.waitKeys(keyList=["left", "right", "q"])
             if "left" in keys:
-                subgroup1version1_f.loc[index, "Response"] = "TRUE"
+                trial_list.loc[index, "Response"] = "TRUE"
             elif "right" in keys:
-                subgroup1version1_f.loc[index, "Response"] = "FALSE"
+                trial_list.loc[index, "Response"] = "FALSE"
             elif "q" in keys:
                 core.quit()
     win.flip()
@@ -351,7 +379,7 @@ for index, (ID, Prime, Target, Question) in trials:
 
 # Save trial_list to csv
 trial_list.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
-    part+'_sub'+subgroup+'ver'+version+'_'+rotation+'_results.csv', encoding='utf_8_sig'
+part+'_sub'+subgroup+'ver'+version+'_'+rotation+'_results.csv', encoding='utf_8_sig')
 
 # Save hdf5 file
 if __name__ == '__main__':
