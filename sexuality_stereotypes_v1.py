@@ -222,7 +222,7 @@ while True:
 
 ### INSTRUCTIONS ROUTINE END ###
 
-### SENTENCE ROUTINE ###
+### MAIN EXPERIMENT ROUTINE ###
 
 # Iterate over the trials based on rotation
 if rotation_type == 'f':
@@ -300,7 +300,7 @@ for index, (ID, Prime, Target, Question) in trial_list:
     win.flip()
     core.wait(1)
 
-### SENTENCE ROUTINE END ###
+### MAIN EXPERIMENT ROUTINE END ###
 
 # Save stims_file to csv
 if rotation_type == 'f':

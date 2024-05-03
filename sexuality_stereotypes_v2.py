@@ -68,20 +68,6 @@ if TRACKER == 'mouse':
     eyetracker_config['calibration'] = dict(screen_background_color=BACKGROUND_COLOR)
     devices_config['eyetracker.hw.mouse.EyeTracker'] = eyetracker_config
 elif TRACKER == 'eyelink':
-    
-    c  
-    
-    
-      
-      
-      c
-      
-      
-      c
-      
-      cccc
-      c
-      c
     eyetracker_config['model_name'] = 'EYELINK 1000 DESKTOP'
     eyetracker_config['runtime_settings'] = dict(sampling_rate=1000, track_eyes=' ')
     eyetracker_config['calibration'] = dict(screen_background_color=BACKGROUND_COLOR)
