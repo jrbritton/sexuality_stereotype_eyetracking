@@ -59,7 +59,7 @@ session_info = (f"{part}_sub{subgroup}_ver{version}_{rotation}")
 ### EYE TRACKER SETUP ###
 
 # Eye tracker to use ('mouse', 'eyelink', 'gazepoint', or 'tobii')
-TRACKER = 'mouse'
+TRACKER = 'eyelink'
 BACKGROUND_COLOR = [128, 128, 128]
 
 devices_config = dict()
@@ -68,6 +68,20 @@ if TRACKER == 'mouse':
     eyetracker_config['calibration'] = dict(screen_background_color=BACKGROUND_COLOR)
     devices_config['eyetracker.hw.mouse.EyeTracker'] = eyetracker_config
 elif TRACKER == 'eyelink':
+    
+    c  
+    
+    
+      
+      
+      c
+      
+      
+      c
+      
+      cccc
+      c
+      c
     eyetracker_config['model_name'] = 'EYELINK 1000 DESKTOP'
     eyetracker_config['runtime_settings'] = dict(sampling_rate=1000, track_eyes=' ')
     eyetracker_config['calibration'] = dict(screen_background_color=BACKGROUND_COLOR)
@@ -196,14 +210,27 @@ orderSeq = orderDict[f'{orderNum}']
 # Convert Section to categorical and use orderSeq to sort
 trial_list['Section'] = pd.Categorical(trial_list['Section'], categories=orderSeq, ordered=True)
 
-# Sort the frame based on Section
-trial_list = trial_list.sort_values(by='Section')
+# Sort the frame based on Section and reset index
+trial_list = trial_list.sort_values(by='Section').reset_index()
 
-# Create trial lists by passing a dataframe or a dictionary
-# These are iterated over in the main experiment loop
+# Setup paths to practice files
+practice_female = 'practice_female.csv'
+practice_male = 'practice_male.csv'
 
 # Practice trials
-# Extract values to list for each column for male and female sets
+if rotation == 'f':
+    practice_trials = pd.read_csv(practice_female)
+if rotation == 'm':
+    practice_trials = pd.read_csv(practice_male)
+
+# Shuffle rows
+practice_trials = practice_trials.sample(frac = 1).reset_index()
+
+# Extract values to list for each column for practice
+practice_id_list = practice_trials['ID'].tolist()
+practice_prime_list = practice_trials['Prime'].tolist()
+practice_target_list = practice_trials['Target'].tolist()
+practice_question_list = practice_trials['Question'].tolist()
 
 # Main trials
 # Extract values to list for each column for trial_list
@@ -219,21 +246,41 @@ target_folder = '../targets'
 
 # Instructions
 
-instructions = '''In this experiment, you will hear the first part of a sentence, then there will be a pause before the final word is played.
-Your task is to combine the two parts together in your head to form a sentence. 
+instructions_female = '''实验开始后你将会听到一系列句子，你的任务是通过听到的句子内容进行判断。
 
-In some trials you will be asked a yes or no question after hearing both parts.
-Please use the left and right arrow keys to answer the question.
+在一句话结束后，你可能会看见一个关于该句子内容的问题，你可以通过键盘左右键选择你认为是或不是。
 
-There will now be a short practice. Please press 'enter' to continue.
+请以尽量快的速度准确地做出判断。
+
+请在实验过程中保持专注!
+
+接下来你将会听到一些由以普通话作为母语的成年女性说出的语句，
+请你通过听见的内容回答与句子内容相关的问题。
+
+'''
+
+instructions_male = '''实验开始后你将会听到一系列句子，你的任务是通过听到的句子内容进行判断。
+
+在一句话结束后，你可能会看见一个关于该句子内容的问题，你可以通过键盘左右键选择你认为是或不是。
+
+请以尽量快的速度准确地做出判断。
+
+请在实验过程中保持专注!
+
+接下来你将会听到一些由以普通话作为母语的成年男性说出的语句，
+请你通过听见的内容回答与句子内容相关的问题。
+
 '''
 
 # Break text
-break_text = '请休息一下。 当您准备好继续时，请按“输入。'
+break_text = '请休息一下。 当您准备好继续时，请按"enter"。'
 
 # True or false question text
 true_false_text1 = '左 = 不是    |    右 = 是的'
 true_false_text2 = '左 = 是的    |    右 = 不是'
+
+# Practice end text
+practiceEnd = '''练习块已经完成。 如果您准备好开始主要实验，请按“enter”。'''
 
 # Thank you text
 thankYou = '''The experiment is complete. Thank you for taking part!
@@ -243,11 +290,16 @@ Please press 'enter' to end the experiment.'''
 
 # Set up all of the display text except the question stims (in main trial loop)
 welcome_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', units='norm', text="Welcome to this experiment!")
-instruct_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', units='norm',text=instructions, alignText='center')
+
+if rotation == 'f':
+    instruct_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm',text=instructions_female, alignText='center')
+if rotation == 'm':
+    instruct_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm',text=instructions_male, alignText='center')
 
 true_false_stim1 = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=true_false_text1, alignText='center', pos=(0, -0.2))
 true_false_stim2 = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=true_false_text2, alignText='center', pos=(0, -0.2))
 
+practice_end_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=practiceEnd, alignText='left')
 thankYou_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', units='norm', text=thankYou, alignText='left')
 fixation = TextStim(win, color=(0.8,1.0,0.5), units='norm', font='Calibri', text="+")
 
@@ -255,7 +307,7 @@ fixation_cross = visual.ShapeStim(
     win=win, name='polygon', vertices='cross',
     size=(30, 30),
     ori=0.0, pos=(0, 0), anchor='center',
-    lineWidth=1.0,     colorSpace='rgb',  lineColor='white', fillColor='white',
+    lineWidth=1.0, colorSpace='rgb', lineColor='white', fillColor='white',
     opacity=None, depth=0.0, interpolate=True)
 
 # Welcome window
@@ -275,7 +327,93 @@ while True:
 
 ### INSTRUCTIONS ROUTINE END ###
 
-### SENTENCE ROUTINE ###
+### PRACTICE ROUTINE ###
+
+# Iterate over the trials based on rotation
+practice = enumerate(zip(practice_id_list, practice_prime_list, practice_target_list, practice_question_list))
+
+for index, (ID, Prime, Target, Question) in practice:
+    interest_region = visual.Circle(win, lineColor=None, radius=200, units='pix')
+    io.clearEvents()
+    tracker.setRecordingState(True)
+    # draw the fixation
+    fixation_cross.draw()
+    win.flip()
+    core.wait(1.5)
+    clock.reset()
+    win.flip()
+    # Get the latest gaze position
+    gpos = tracker.getLastGazePosition()
+    tracker.getLastSample()
+    # Set up stim
+    current_prime = os.path.join(prime_folder, Prime)
+    prime_stim = sound.Sound(current_prime)
+    prime_stim.play()
+    core.wait(prime_stim.getDuration())
+    trial_clock.reset()
+    win.flip()
+    # Play the target audio
+    core.wait(1.5)
+    fixation_cross.draw()
+    win.flip()
+    current_target = os.path.join(target_folder, Target)
+    target_stim = sound.Sound(current_target)
+    target_stim.play()
+    core.wait(target_stim.getDuration())
+    core.wait(2.7)
+    trial_clock.reset()
+    # Get pupil and other info
+    tracker.getLastSample()
+    tracker.setRecordingState(False)
+    win.flip()
+    core.wait(1)
+    # Set up question
+    current_question = Question
+    # Create 1/3 chance of question
+    # This checks whether the random number is 2 (show question)
+    question_num = random.randint(1,3)
+    if question_num == 2:
+        question_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=Question, alignText='center')
+        question_stim.draw()
+        true_false_num = random.randint(1,2)
+        if true_false_num == 1:
+            true_false_stim1.draw()
+            win.flip()
+            # Check which key was pressed and record response
+            keys = event.waitKeys(keyList=["left", "right", "q"])
+            if "left" in keys:
+                practice_trials.loc[index, "Response"] = "FALSE"
+            elif "right" in keys:
+                practice_trials.loc[index, "Response"] = "TRUE"
+            elif "q" in keys:
+                core.quit()
+        else:
+            true_false_stim2.draw()
+            win.flip()
+            keys = event.waitKeys(keyList=["left", "right", "q"])
+            if "left" in keys:
+                practice_trials.loc[index, "Response"] = "TRUE"
+            elif "right" in keys:
+                practice_trials.loc[index, "Response"] = "FALSE"
+            elif "q" in keys:
+                core.quit()
+    win.flip()
+    core.wait(1)
+    
+tracker.setConnectionState(False)
+    
+while True:
+    practice_end_stim.draw()
+    win.flip()
+    keys = kb.getKeys()
+    contKey = event.waitKeys()
+    if 'return' in contKey:
+        # Continue to main trials
+        break
+
+### PRACTICE ROUTINE END ###
+
+### MAIN EXPERIMENT ROUTINE ###
 
 # Iterate over the trials based on rotation
 trials = enumerate(zip(section_list, id_list, prime_list, target_list, question_list))
@@ -374,8 +512,8 @@ for index, (ID, Section, Prime, Target, Question) in trials:
                 core.quit()
     win.flip()
     core.wait(1)
-
-### SENTENCE ROUTINE END ###
+    
+### MAIN EXPERIMENT ROUTINE END ###
 
 # Save trial_list to csv
 trial_list.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\

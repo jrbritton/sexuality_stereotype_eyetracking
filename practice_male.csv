@@ -1,6 +1,6 @@
-﻿ID,Prime,Target,CorrrectA,code,Dur,Dur_ms,question
-1,M01_P_F080_plusHalfERB,糖果,unrel,46,2.568776,2568.776,说话人提到了自己的老师吗
-2,M03_P06_minusHalfERB,歌曲,unrel,46,2.362132,2362.132,说话人认为有人在唱悲伤的歌吗
-3,M02_P10_minusHalfERB,运动,rel,46,2.109501,2109.501,说话人提到了游泳吗
-4,M05_P08_minusHalfERB,扩张,rel,46,1.770408,1770.408,说话人公司的业务在扩张吗
-5,M02_P09_plusHalfERB,光芒,rel,46,2.3222,2322.2,说话人提到了灯光吗
+﻿ID,Prime,Target,Target_Word,CorrrectA,Code,Dur,Dur_ms,Question
+1,M01_P_F080_plusHalfERB.wav,M01_P_F080_tar_plusHalfERB.wav,糖果,unrel,46,2.568776,2568.776,说话人提到了自己的老师吗
+2,M03_P06_minusHalfERB.wav,M03_P06_tar_minusHalfERB.wav,歌曲,unrel,46,2.362132,2362.132,说话人认为有人在唱悲伤的歌吗
+3,M02_P10_minusHalfERB.wav,M02_P10_tar_minusHalfERB.wav,运动,rel,46,2.109501,2109.501,说话人提到了游泳吗
+4,M05_P08_minusHalfERB.wav,M05_P08_tar_minusHalfERB.wav,扩张,rel,46,1.770408,1770.408,说话人公司的业务在扩张吗
+5,M02_P09_plusHalfERB.wav,M02_P09_tar_plusHalfERB.wav,光芒,rel,46,2.3222,2322.2,说话人提到了灯光吗
