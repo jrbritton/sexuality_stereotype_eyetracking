@@ -91,10 +91,11 @@ win = visual.Window((1280, 1024),
                     color=BACKGROUND_COLOR,
                     screen=0
                     )
+
                     
 io = launchHubServer(window=win, 
                     **devices_config, 
-                    experiment_code='Gender Stereotypes',
+                    experiment_code='sex_stereo',
                     session_code=session_info)
                 
 # Specify the iohub .hdf5 file to process. None will prompt for file selection when script is run.
@@ -136,6 +137,7 @@ kb = Keyboard()
 # Setup paths to subgroup stims files
 subgroup1version1_f = 'subgroup1version1_f.csv'
 subgroup1version1_m = 'subgroup1version1_m.csv'
+subgroup1version1_test = 'subgroup1version1_test.csv'
 
 # Create trial list based on session info
 # Note: subgroup and version are strings here (see line 52)
@@ -155,9 +157,11 @@ elif subgroup == '2' and version == '1' and rotation == 'm':
     trial_list = pd.read_csv(subgroup2version1_m)    
 elif subgroup == '2' and version == '2' and rotation == 'm':
     trial_list = pd.read_csv(subgroup2version2_m)    
+elif rotation == 'test':
+    trial_list = pd.read_csv(subgroup1version1_test) 
 
 # Shuffle rows in the trial_list using pandas sample (frac=1 is 100% of rows)
-trial_list = trial_list.sample(frac = 1).reset_index()
+trial_list = trial_list.sample(frac = 1)
 
 # Create all possible orders for 1 - 4
 # Randomly select one to sort by
@@ -208,6 +212,8 @@ if rotation == 'f':
     practice_trials = pd.read_csv(practice_female)
 if rotation == 'm':
     practice_trials = pd.read_csv(practice_male)
+if rotation == 'test':
+    practice_trials = pd.read_csv(practice_female)
 
 # Shuffle rows
 practice_trials = practice_trials.sample(frac = 1).reset_index()
@@ -232,30 +238,36 @@ target_folder = '../targets'
 
 # Instructions
 
-instructions_female = '''实验开始后你将会听到一系列句子，你的任务是通过听到的句子内容进行判断。
+instructions_female = '''实验开始后你将会听到一系列句子，
+你的任务是通过听到的句子内容进行判断。
 
-在一句话结束后，你可能会看见一个关于该句子内容的问题，你可以通过键盘左右键选择你认为是或不是。
+在一句话结束后，
+你可能会看见一个关于该句子内容的问题，
+你可以通过键盘左右键选择你认为是或不是。
 
 请以尽量快的速度准确地做出判断。
 
 请在实验过程中保持专注!
 
-接下来你将会听到一些由以普通话作为母语的成年女性说出的语句，
+接下来你将会听到一些
+由以普通话作为母语的成年女性说出的语句，
 请你通过听见的内容回答与句子内容相关的问题。
-
 '''
 
-instructions_male = '''实验开始后你将会听到一系列句子，你的任务是通过听到的句子内容进行判断。
+instructions_male = '''实验开始后你将会听到一系列句子，
+你的任务是通过听到的句子内容进行判断。
 
-在一句话结束后，你可能会看见一个关于该句子内容的问题，你可以通过键盘左右键选择你认为是或不是。
+在一句话结束后，
+你可能会看见一个关于该句子内容的问题，
+你可以通过键盘左右键选择你认为是或不是。
 
 请以尽量快的速度准确地做出判断。
 
 请在实验过程中保持专注!
 
-接下来你将会听到一些由以普通话作为母语的成年男性说出的语句，
+接下来你将会听到一些
+由以普通话作为母语的成年男性说出的语句，
 请你通过听见的内容回答与句子内容相关的问题。
-
 '''
 
 # Break text
@@ -266,7 +278,7 @@ true_false_text1 = '左 = 不是    |    右 = 是的'
 true_false_text2 = '左 = 是的    |    右 = 不是'
 
 # Practice end text
-practiceEnd = '''练习块已经完成。 如果您准备好开始主要实验，请按“enter”。'''
+practiceEnd = '练习块已经完成。 如果您准备好开始主要实验，请按"enter"。'
 
 # Thank you text
 thankYou = '''The experiment is complete. Thank you for taking part!
@@ -281,12 +293,14 @@ if rotation == 'f':
     instruct_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm',text=instructions_female, alignText='center')
 if rotation == 'm':
     instruct_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm',text=instructions_male, alignText='center')
-
+if rotation == 'test':
+    instruct_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm',text=instructions_female, alignText='center')
+    
 true_false_stim1 = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=true_false_text1, alignText='center', pos=(0, -0.2))
 true_false_stim2 = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=true_false_text2, alignText='center', pos=(0, -0.2))
 
-practice_end_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=practiceEnd, alignText='left')
-thankYou_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', units='norm', text=thankYou, alignText='left')
+practice_end_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=practiceEnd, alignText='center')
+thankYou_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', units='norm', text=thankYou, alignText='center')
 fixation = TextStim(win, color=(0.8,1.0,0.5), units='norm', font='Calibri', text="+")
 
 fixation_cross = visual.ShapeStim(
@@ -323,15 +337,12 @@ for index, (ID, Prime, Target, Question) in practice:
     io.clearEvents()
     tracker.setRecordingState(True)
     # draw the fixation
-    fixation_cross.draw()
     win.flip()
-    core.wait(1.5)
     clock.reset()
-    win.flip()
     # Get the latest gaze position
     gpos = tracker.getLastGazePosition()
     tracker.getLastSample()
-    # Set up stim
+    # Set up stims
     current_prime = os.path.join(prime_folder, Prime)
     prime_stim = sound.Sound(current_prime)
     prime_stim.play()
@@ -339,9 +350,9 @@ for index, (ID, Prime, Target, Question) in practice:
     trial_clock.reset()
     win.flip()
     # Play the target audio
-    core.wait(1.5)
     fixation_cross.draw()
     win.flip()
+    core.wait(1.5)
     current_target = os.path.join(target_folder, Target)
     target_stim = sound.Sound(current_target)
     target_stim.play()
@@ -401,30 +412,42 @@ while True:
 
 ### MAIN EXPERIMENT ROUTINE ###
 
+# Set break numbers by trial counter for main and test runs
+
+if rotation == 'f' or rotation == 'm':
+    break1 = 26
+    break2 = 51
+    break3 = 76
+if rotation == 'test':
+    break1 = 4
+    break2 = 7
+    break3 = 10
+
 # Iterate over the trials based on rotation
 trials = enumerate(zip(section_list, id_list, prime_list, target_list, question_list))
 trial = 0
-for index, (ID, Section, Prime, Target, Question) in trials:
+
+for index, (Section, ID, Prime, Target, Question) in trials:
     interest_region = visual.Circle(win, lineColor=None, radius=200, units='pix')
     trial_num = str(index)
     trial += 1
     trial_list.loc[index, "Trial"] = trial
     io.clearEvents()
-    if trial == 26:
+    if trial == break1:
         break_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=break_text, alignText='center')
         break_message.draw()
         win.flip()
         contKey = event.waitKeys()
         if 'return' in contKey:
             continue
-    elif trial == 51:
+    if trial == break2:
         break_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=break_text, alignText='center')
         break_message.draw()
         win.flip()
         contKey = event.waitKeys()
         if 'return' in contKey:
             continue
-    elif trial == 76:
+    if trial == break3:
         break_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=break_text, alignText='center')
         break_message.draw()
         win.flip()
@@ -434,12 +457,9 @@ for index, (ID, Section, Prime, Target, Question) in trials:
     tracker.setRecordingState(True)
     # draw the fixation
     io.sendMessageEvent(text='fixationtask_start', category=trial_num)
-    fixation_cross.draw()
     win.flip()
-    core.wait(1.5)
     clock.reset()
     io.sendMessageEvent(text=TRIAL_START, category=trial_num)
-    win.flip()
     # Get the latest gaze position
     gpos = tracker.getLastGazePosition()
     tracker.getLastSample()
@@ -503,7 +523,7 @@ for index, (ID, Section, Prime, Target, Question) in trials:
 
 # Save trial_list to csv
 trial_list.to_csv('../results/subgroup'+subgroup+'_version'+version+'/'+\
-part+'_sub'+subgroup+'ver'+version+'_'+rotation+'_results.csv', encoding='utf_8_sig')
+session_info+'_results.csv', encoding='utf_8_sig')
 
 # Save hdf5 file
 if __name__ == '__main__':

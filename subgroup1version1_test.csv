@@ -1,0 +1,13 @@
+﻿Section,ID,Prime,Target,Target_Word,CorrrectA,Code,Dur,Question,SentenceID,SpeakerGender,SpeakerID,SentenceGroup,PitchLevel,ContentCongruency,PitchTypicality
+1,124,F06_D045_minusHalfERB.wav,F06_D045_tar_minusHalfERB.wav,空少,FALSE,112,2237.438,说话人的前任现在是个空少吗,D045,F,F06,D,minusHalfERB,congruent,atypical
+1,82,F03_D002_plusHalfERB.wav,F03_D002_tar_plusHalfERB.wav,丈夫,FALSE,111,2246.168,说话人今年会结婚吗,D002,F,F03,D,plusHalfERB,congruent,typical
+1,191,F05_G110_minusHalfERB.wav,F05_G110_tar_minusHalfERB.wav,经理,FALSE,102,2421.02,说话人的爱人养兔子吗,G110,F,F05,G,minusHalfERB,filler,filler
+2,97,F02_D017_plusHalfERB.wav,F02_D017_tar_plusHalfERB.wav,孙子,TRUE,111,2846.667,说话人的对象是其家中唯一的孙子吗,D017,F,F02,D,plusHalfERB,congruent,typical
+2,100,F06_D020_minusHalfERB.wav,F06_D020_tar_minusHalfERB.wav,男神,FALSE,112,2499.524,说话人的对象没什么魅力吗,D020,F,F06,D,minusHalfERB,congruent,atypical
+2,197,F03_G123_plusHalfERB.wav,F03_G123_tar_plusHalfERB.wav,歌手,FALSE,102,3063.288,说话人从冰箱里拿东西了吗,G123,F,F03,G,plusHalfERB,filler,filler
+3,140,F02_D064_plusHalfERB.wav,F02_D064_tar_plusHalfERB.wav,小子,TRUE,111,2497.71,说话人提及了其爱人的喜好吗,D064,F,F02,D,plusHalfERB,congruent,typical
+3,89,F03_D009_plusHalfERB.wav,F03_D009_tar_plusHalfERB.wav,岳母,TRUE,111,2789.274,说话人在家中有害怕的人吗,D009,F,F03,D,plusHalfERB,congruent,typical
+3,196,F06_G122_minusHalfERB.wav,F06_G122_tar_minusHalfERB.wav,画家,FALSE,102,2611.224,说话人的爱人昨天买东西了吗,G122,F,F06,G,minusHalfERB,filler,filler
+4,114,F06_D034_minusHalfERB.wav,F06_D034_tar_minusHalfERB.wav,胡子,TRUE,112,2536.372,说话人讨厌自己的对象的胡子吗,D034,F,F06,D,minusHalfERB,congruent,atypical
+4,106,F02_D026_plusHalfERB.wav,F02_D026_tar_plusHalfERB.wav,和尚,TRUE,111,3133.469,说话人的对象曾打算出家吗,D026,F,F02,D,plusHalfERB,congruent,typical
+4,195,F05_G121_minusHalfERB.wav,F05_G121_tar_minusHalfERB.wav,农民,FALSE,102,3036.893,说话人从来不会忘带东西吗,G121,F,F05,G,minusHalfERB,filler,filler
