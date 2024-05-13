@@ -1,4 +1,4 @@
-﻿Section,ID,Prime,Target,Target_Word,CorrrectA,Code,Dur,Question,SentenceID,SpeakerGender,SpeakerID,SentenceGroup,PitchLevel,ContentCongruency,PitchTypicality
+﻿Section,ID,Prime,Target,Target_Word,CorrectA,Code,Dur,Question,SentenceID,SpeakerGender,SpeakerID,SentenceGroup,PitchLevel,ContentCongruency,PitchTypicality
 1,101,M01_D021_plusHalfERB.wav,M01_D021_tar_plusHalfERB.wav,绅士,TRUE,122,2407.256,说话人在幻想自己未来的伴侣吗,D021,M,M01,D,plusHalfERB,incongruent,atypical
 1,102,M05_D022_minusHalfERB.wav,M05_D022_tar_minusHalfERB.wav,糙汉,TRUE,121,2179.751,说话人总是吐槽自己的对象吗,D022,M,M05,D,minusHalfERB,incongruent,typical
 1,134,M05_D057_minusHalfERB.wav,M05_D057_tar_minusHalfERB.wav,光棍,FALSE,121,2444.875,说话人的对象之前谈过很多次恋爱吗,D057,M,M05,D,minusHalfERB,incongruent,typical
