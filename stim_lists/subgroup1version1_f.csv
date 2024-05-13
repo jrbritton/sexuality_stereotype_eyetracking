@@ -1,4 +1,4 @@
-﻿Section,ID,Prime,Target,Target_Word,CorrrectA,Code,Dur,Question,SentenceID,SpeakerGender,SpeakerID,SentenceGroup,PitchLevel,ContentCongruency,PitchTypicality
+﻿Section,ID,Prime,Target,Target_Word,CorrectA,Code,Dur,Question,SentenceID,SpeakerGender,SpeakerID,SentenceGroup,PitchLevel,ContentCongruency,PitchTypicality
 1,124,F06_D045_minusHalfERB.wav,F06_D045_tar_minusHalfERB.wav,空少,FALSE,112,2237.438,说话人的前任现在是个空少吗,D045,F,F06,D,minusHalfERB,congruent,atypical
 1,82,F03_D002_plusHalfERB.wav,F03_D002_tar_plusHalfERB.wav,丈夫,FALSE,111,2246.168,说话人今年会结婚吗,D002,F,F03,D,plusHalfERB,congruent,typical
 1,98,F03_D018_plusHalfERB.wav,F03_D018_tar_plusHalfERB.wav,班草,FALSE,111,2661.179,说话人的对象高中时长相普通吗,D018,F,F03,D,plusHalfERB,congruent,typical

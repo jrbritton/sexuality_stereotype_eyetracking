@@ -22,8 +22,9 @@ prefs.hardware['audioLib'] = ['PTB', 'sounddevice', 'pyo', 'pygame']
 exp_info = {'participant': 0, 
             'subgroup': 0, 
             'version': 0, 
-            'rotation': ''} 
-dlg = DlgFromDict(exp_info)
+            'rotation': '',
+            'tracker (mouse/eyelink)': ''}
+dlg = DlgFromDict(exp_info, title='Experiment Setup', sortKeys=False)
 
 ### DIALOGUE BOX ROUTINE END ###
 
@@ -55,11 +56,12 @@ subgroup = str(exp_info['subgroup'])
 version = str(exp_info['version'])
 rotation = str(exp_info['rotation'])
 session_info = (f"{part}_sub{subgroup}_ver{version}_{rotation}")
+tracker_info = str(exp_info['tracker (mouse/eyelink)'])
 
 ### EYE TRACKER SETUP ###
 
 # Eye tracker to use ('mouse', 'eyelink', 'gazepoint', or 'tobii')
-TRACKER = 'eyelink'
+TRACKER = tracker_info
 BACKGROUND_COLOR = [128, 128, 128]
 
 devices_config = dict()
@@ -134,31 +136,13 @@ trial_clock = Clock()
 # Initialize Keyboard
 kb = Keyboard()
 
-# Setup paths to subgroup stims files
-subgroup1version1_f = 'subgroup1version1_f.csv'
-subgroup1version1_m = 'subgroup1version1_m.csv'
-subgroup1version1_test = 'subgroup1version1_test.csv'
-
-# Create trial list based on session info
-# Note: subgroup and version are strings here (see line 52)
-if subgroup == '1' and version == '1' and rotation == 'f':
-    trial_list = pd.read_csv(subgroup1version1_f)
-elif subgroup == '1' and version == '2' and rotation == 'f':
-    trial_list = pd.read_csv(subgroup1version2_f)
-elif subgroup == '2' and version == '1' and rotation == 'f':
-    trial_list = pd.read_csv(subgroup2version1_f)
-elif subgroup == '2' and version == '2' and rotation == 'f':
-    trial_list = pd.read_csv(subgroup2version2_f)
-elif subgroup == '1' and version == '1' and rotation == 'm':
-    trial_list = pd.read_csv(subgroup1version1_m)
-elif subgroup == '1' and version == '2' and rotation == 'm':
-    trial_list = pd.read_csv(subgroup1version2_m)
-elif subgroup == '2' and version == '1' and rotation == 'm':
-    trial_list = pd.read_csv(subgroup2version1_m)    
-elif subgroup == '2' and version == '2' and rotation == 'm':
-    trial_list = pd.read_csv(subgroup2version2_m)    
-elif rotation == 'test':
-    trial_list = pd.read_csv(subgroup1version1_test) 
+# Create trial lists based on session info
+def trial_list_reader(subgroup,version,rotation):
+    trial_list_path = 'stim_lists/subgroup'+subgroup+'version'+version+'_'+rotation+'.csv'
+    trial_list = pd.read_csv(trial_list_path)
+    return trial_list
+    
+trial_list = trial_list_reader(subgroup,version,rotation)
 
 # Shuffle rows in the trial_list using pandas sample (frac=1 is 100% of rows)
 trial_list = trial_list.sample(frac = 1)
@@ -204,8 +188,8 @@ trial_list['Section'] = pd.Categorical(trial_list['Section'], categories=orderSe
 trial_list = trial_list.sort_values(by='Section').reset_index()
 
 # Setup paths to practice files
-practice_female = 'practice_female.csv'
-practice_male = 'practice_male.csv'
+practice_female = 'stim_lists/practice_female.csv'
+practice_male = 'stim_lists/practice_male.csv'
 
 # Practice trials
 if rotation == 'f':
@@ -238,40 +222,34 @@ target_folder = '../targets'
 
 # Instructions
 
-instructions_female = '''实验开始后你将会听到一系列句子，
-你的任务是通过听到的句子内容进行判断。
-
-在一句话结束后，
-你可能会看见一个关于该句子内容的问题，
-你可以通过键盘左右键选择你认为是或不是。
+instructions_female = '''
+实验开始后你将会听到一系列句子，
+你的任务是通过听到的句子内容进\n行判断。在一句话结束后，你可能会\n看见一个关于该句子内容的问题，
+你可以通过键盘左右键选择你认为是\n或不是。
 
 请以尽量快的速度准确地做出判断。
 
 请在实验过程中保持专注!
 
-接下来你将会听到一些
-由以普通话作为母语的成年女性说出的语句，
-请你通过听见的内容回答与句子内容相关的问题。
+接下来你将会听到一些由以普通话作为\n母语的成年女性说出的语句，请你通\n过听见的内容回答与句子内容相关\n的问题。
 '''
 
-instructions_male = '''实验开始后你将会听到一系列句子，
-你的任务是通过听到的句子内容进行判断。
-
-在一句话结束后，
-你可能会看见一个关于该句子内容的问题，
-你可以通过键盘左右键选择你认为是或不是。
+instructions_male = '''
+实验开始后你将会听到一系列句子，
+你的任务是通过听到的句子内容进\n行判断。在一句话结束后，你可能会\n看见一个关于该句子内容的问题，
+你可以通过键盘左右键选择你认为是\n或不是。
 
 请以尽量快的速度准确地做出判断。
 
 请在实验过程中保持专注!
 
-接下来你将会听到一些
-由以普通话作为母语的成年男性说出的语句，
-请你通过听见的内容回答与句子内容相关的问题。
+接下来你将会听到一些由以普通话作为\n母语的成年男性说出的语句，请你通\n过听见的内容回答与句子内容相关\n的问题。
 '''
+
 
 # Break text
-break_text = '请休息一下。 当您准备好继续时，请按"enter"。'
+break_text = '''请休息一下。 
+当您准备好继续时，请按`enter'。'''
 
 # True or false question text
 true_false_text1 = '左 = 不是    |    右 = 是的'
@@ -433,27 +411,23 @@ for index, (Section, ID, Prime, Target, Question) in trials:
     trial += 1
     trial_list.loc[index, "Trial"] = trial
     io.clearEvents()
-    if trial == break1:
+    contKey = []
+    if trial == break1 or trial == break2 or trial == break3 and 'return' not in contKey:
         break_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=break_text, alignText='center')
         break_message.draw()
         win.flip()
         contKey = event.waitKeys()
-        if 'return' in contKey:
-            continue
-    if trial == break2:
-        break_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=break_text, alignText='center')
-        break_message.draw()
+    # Run calibration again if a break has occurred
+    if 'return' in contKey:
+        # Minimize the PsychoPy window if needed
+        hideWindow(win)
+        # Display calibration gfx window and run calibration.
+        result = tracker.runSetupProcedure()
+        print("Calibration returned: ", result)
+        # Maximize the PsychoPy window
+        showWindow(win)
         win.flip()
-        contKey = event.waitKeys()
-        if 'return' in contKey:
-            continue
-    if trial == break3:
-        break_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=break_text, alignText='center')
-        break_message.draw()
-        win.flip()
-        contKey = event.waitKeys()
-        if 'return' in contKey:
-            continue
+        core.wait(1)
     tracker.setRecordingState(True)
     # draw the fixation
     io.sendMessageEvent(text='fixationtask_start', category=trial_num)
