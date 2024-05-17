@@ -250,16 +250,17 @@ instructions_male = '''
 # Break text
 break_text = '''请休息一下。
 
-当您准备好继续时，请按`enter'。'''
+当您准备好继续时，请提醒实验者。'''
 
 # True or false question text
 true_false_text1 = '左 = 不是    |    右 = 是的'
 true_false_text2 = '左 = 是的    |    右 = 不是'
 
 # Practice end text
-practiceEnd = '''练习块已经完成。
+practiceEnd = '练习块已经完成。 如果您准备好开始主要实验，请按enter。'
 
-如果您准备好开始主要实验，请按"enter"。'''
+# Continue text
+continue_text = '如果您准备好开始主要实验，请按enter。'
 
 # Thank you text
 thankYou = '''The experiment is complete. 
@@ -284,6 +285,7 @@ true_false_stim2 = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm
 practice_end_stim = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=practiceEnd, alignText='center')
 thankYou_txt_stim = TextStim(win, color=(0.8,1.0,0.5), font='Calibri', units='norm', text=thankYou, alignText='center')
 fixation = TextStim(win, color=(0.8,1.0,0.5), units='norm', font='Calibri', text="+")
+continue_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=continue_text, alignText='center')
 
 fixation_cross = visual.ShapeStim(
     win=win, name='polygon', vertices='cross',
@@ -302,7 +304,6 @@ wait(3)
 while True:
     instruct_txt_stim.draw()
     win.flip()
-    keys = kb.getKeys()
     contKey = event.waitKeys()
     if 'return' in contKey:
         break
@@ -377,7 +378,7 @@ for index, (ID, Prime, Target, Question) in practice:
     win.flip()
     core.wait(1)
     
-tracker.setConnectionState(False)
+#tracker.setConnectionState(False)
     
 while True:
     practice_end_stim.draw()
@@ -415,13 +416,13 @@ for index, (ID, Section, Prime, Target, Question) in trials:
     trial_list.loc[index, "Trial"] = trial
     io.clearEvents()
     contKey = []
-    if trial == break1 or trial == break2 or trial == break3 and 'return' not in contKey:
+    if trial == break1 or trial == break2 or trial == break3 and '1' not in contKey:
         break_message = TextStim(win, color=(0.8,1.0,0.5), font='SimSun', units='norm', text=break_text, alignText='center')
         break_message.draw()
         win.flip()
-        contKey = event.waitKeys()
+        contKey = event.waitKeys(keyList=["1"])
     # Run calibration again if a break has occurred
-    if 'return' in contKey:
+    if '1' in contKey:
         # Minimize the PsychoPy window if needed
         hideWindow(win)
         # Display calibration gfx window and run calibration.
@@ -431,6 +432,13 @@ for index, (ID, Section, Prime, Target, Question) in trials:
         showWindow(win)
         win.flip()
         core.wait(1)
+        while True:
+            continue_message.draw()
+            win.flip()
+            contKey = event.waitKeys(keyList=["return"])
+            if 'return' in contKey:
+                # Continue to main trials
+                break
     tracker.setRecordingState(True)
     # draw the fixation
     io.sendMessageEvent(text='fixationtask_start', category=trial_num)
