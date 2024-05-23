@@ -441,7 +441,7 @@ for index, (ID, Section, Prime, Target, Question) in trials:
                 break
     tracker.setRecordingState(True)
     # draw the fixation
-    io.sendMessageEvent(text='fixationtask_start', category=trial_num)
+    io.sendMessageEvent(text='fixation_start', category=trial_num)
     fixation_cross.draw()
     win.flip()
     clock.reset()
@@ -456,9 +456,11 @@ for index, (ID, Section, Prime, Target, Question) in trials:
     core.wait(prime_stim.getDuration())
     trial_clock.reset()
     # Play the target audio
+    io.sendMessageEvent(text='target_start', category=trial_num)
     core.wait(1.5)
     current_target = os.path.join(target_folder, Target)
     target_stim = sound.Sound(current_target)
+    io.sendMessageEvent(text='target_play', category=trial_num)
     target_stim.play()
     core.wait(target_stim.getDuration())
     core.wait(2.7)

@@ -111,6 +111,15 @@ SAVE_EVENT_FIELDS = None # ['time', 'gaze_x', 'gaze_y', 'pupil_measure1', 'statu
 # Set both to None to save all events.
 TRIAL_START = 'trial_start' #'text.started' #  'target.started'
 TRIAL_END = 'trial_end' #'fix_end_stim.started' #  'fix_end_stim.started'
+# Start of the fixation cross (target audio played after 1.5 seconds)
+FIXATION_START = 'fixation_start'
+
+PRACTICE_START = 'practice_start'
+PRACTICE_END = 'practice_end'
+PRACTICETARG_START = 'practice_targ_start'
+
+# Start of the audio
+TARGET_START = 'target_start' 
 
 # Get some iohub devices for future access.
 keyboard = io.getDevice('keyboard')
@@ -318,7 +327,11 @@ practice = enumerate(zip(practice_id_list, practice_prime_list, practice_target_
 for index, (ID, Prime, Target, Question) in practice:
     interest_region = visual.Circle(win, lineColor=None, radius=200, units='pix')
     io.clearEvents()
+    prac_num = str(index)
     tracker.setRecordingState(True)
+    io.sendMessageEvent(text=PRACTICE_START, category=prac_num)
+    # Send EDF message
+    tracker.sendMessage('Practice_Start')
     # draw the fixation
     win.flip()
     clock.reset()
@@ -332,18 +345,27 @@ for index, (ID, Prime, Target, Question) in practice:
     core.wait(prime_stim.getDuration())
     trial_clock.reset()
     win.flip()
-    # Play the target audio
+    # Fixation cross
+    io.sendMessageEvent(text=FIXATION_START, category=prac_num)
+    tracker.sendMessage('Fixation_Start')
     fixation_cross.draw()
     win.flip()
     core.wait(1.5)
     current_target = os.path.join(target_folder, Target)
     target_stim = sound.Sound(current_target)
+    # Play the target audio
+    io.sendMessageEvent(text=PRACTICETARG_START, category=prac_num)
+    # Send EDF message
+    tracker.sendMessage('PracticeTarg_Start')
     target_stim.play()
     core.wait(target_stim.getDuration())
     core.wait(2.7)
     trial_clock.reset()
     # Get pupil and other info
     tracker.getLastSample()
+    io.sendMessageEvent(text=PRACTICE_END, category=prac_num)
+    # Send EDF message
+    tracker.sendMessage('Practice_End')
     tracker.setRecordingState(False)
     win.flip()
     core.wait(1)
@@ -439,11 +461,12 @@ for index, (Section, ID, Prime, Target, Question) in trials:
                 # Continue to main trials
                 break
     tracker.setRecordingState(True)
-    # draw the fixation
-    io.sendMessageEvent(text='fixationtask_start', category=trial_num)
     win.flip()
     clock.reset()
+    trial_clock.reset()
     io.sendMessageEvent(text=TRIAL_START, category=trial_num)
+    # Send EDF message
+    tracker.sendMessage('Trial_Start')
     # Get the latest gaze position
     gpos = tracker.getLastGazePosition()
     tracker.getLastSample()
@@ -454,19 +477,28 @@ for index, (Section, ID, Prime, Target, Question) in trials:
     core.wait(prime_stim.getDuration())
     trial_clock.reset()
     win.flip()
-    # Play the target audio
-    core.wait(1.5)
+    # draw the fixation
+    io.sendMessageEvent(text=FIXATION_START, category=trial_num)
+    # Send EDF message
+    io.sendMessageEvent(text=FIXATION_START, category=trial_num)
+    tracker.sendMessage('Fixation_Start')
     fixation_cross.draw()
     win.flip()
+    core.wait(1.5)
+    # Play the target audio
     current_target = os.path.join(target_folder, Target)
     target_stim = sound.Sound(current_target)
+    # Send EDF message
+    io.sendMessageEvent(text=TARGET_START, category=trial_num)
+    tracker.sendMessage('Target_Start')
     target_stim.play()
     core.wait(target_stim.getDuration())
     core.wait(2.7)
-    trial_clock.reset()
     # Get pupil and other info
     tracker.getLastSample()
     io.sendMessageEvent(text=TRIAL_END, category=trial_num)
+    # Send EDF message
+    tracker.sendMessage('Trial_End')
     tracker.setRecordingState(False)
     win.flip()
     core.wait(1)
