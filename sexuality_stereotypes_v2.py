@@ -8,6 +8,7 @@ from psychopy.iohub.client.eyetracker.validation import TargetStim
 from psychopy.iohub.client import launchHubServer, ioHubConnection, yload, yLoader
 from psychopy.iohub.util import hideWindow, showWindow
 from psychopy.iohub.datastore.util import saveEventReport
+from psychopy.visual.textbox import TextBox
 import pandas as pd
 import pylink as pl
 import os
@@ -332,7 +333,7 @@ for index, (ID, Prime, Target, Question) in practice:
     io.sendMessageEvent(text=PRACTICE_START, category=prac_num)
     # Send EDF message
     tracker.sendMessage('Practice_Start')
-    # draw the fixation
+    # Draw the fixation
     win.flip()
     clock.reset()
     # Get the latest gaze position
@@ -442,15 +443,13 @@ for index, (Section, ID, Prime, Target, Question) in trials:
         break_message.draw()
         win.flip()
         contKey = event.waitKeys(keyList=["1"])
-    # Run calibration again if a break has occurred
+    # Run drift check if a break has occurred
     if '1' in contKey:
-        # Minimize the PsychoPy window if needed
-        hideWindow(win)
-        # Display calibration gfx window and run calibration.
-        result = tracker.runSetupProcedure()
-        print("Calibration returned: ", result)
+        # Show cross for drift check
+        fixation_cross.draw()
+        win.flip()
+        contKey = event.waitKeys(keyList=["return"])
         # Maximize the PsychoPy window
-        showWindow(win)
         win.flip()
         core.wait(1)
         while True:
@@ -477,7 +476,7 @@ for index, (Section, ID, Prime, Target, Question) in trials:
     core.wait(prime_stim.getDuration())
     trial_clock.reset()
     win.flip()
-    # draw the fixation
+    # Draw the fixation
     io.sendMessageEvent(text=FIXATION_START, category=trial_num)
     # Send EDF message
     io.sendMessageEvent(text=FIXATION_START, category=trial_num)
